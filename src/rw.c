@@ -3,6 +3,7 @@
 #include <string.h>
 #include <argp.h>
 #include <math.h>
+#include <stdbool.h>
 
 static long find_chunk(FILE*, char*);
 static int print_file_meta(FILE*, char*, unsigned char);
@@ -10,7 +11,7 @@ static int print_chunk_meta(FILE*, long, unsigned char);
 static int print_chunk_count(FILE*, unsigned char);
 static int count_chunks(FILE*);
 static int read_all_chunks(unsigned long[], FILE*);
-static unsigned char validate_file_format(FILE*);
+static bool validate_file_format(FILE*);
 
 const char *argp_program_version = "riffdump 0.1";
 const char *argp_program_bug_address = "<mo@momme.wtf>";
@@ -23,10 +24,10 @@ static struct argp_option options[] = {
 }; 
 
 typedef struct Options {
-	unsigned char list_some;
-	unsigned char list_all;
-	unsigned char count_only;
-	unsigned char verbose;
+	bool list_some;
+	bool list_all;
+	bool count_only;
+	bool verbose;
 	char *chunks;
 } Options;
 
@@ -35,23 +36,23 @@ static int parse_opt (int key, char *arg, struct argp_state *state) {
 	
 	switch (key) {
 		case 'c':
-			options->count_only = 1;
+			options->count_only = true;
 			break;
 
 		case 'l':
-			if(arg == NULL) { options->list_all = 1; break; } //without argument to --list
-			else {options->list_some = 1; options->chunks = arg; } //with argument to --list
+			if(arg == NULL) { options->list_all = true; break; } //without argument to --list
+			else {options->list_some = true; options->chunks = arg; } //with argument to --list
 			break;
 
 		case 'v':
-			options->verbose = 1;
+			options->verbose = true;
 			break;
 
 		case ARGP_KEY_ARG:
 			/*empty statement*/;
 			FILE *file = fopen(arg, "rb");
 			if(file == NULL) { argp_failure(state, 1, 0, "No such file or directory"); }
-			if(validate_file_format(file) == 0) { argp_failure(state, 1, 0, "Unrecognized file format"); }
+			if(!validate_file_format(file)) { argp_failure(state, 1, 0, "Unrecognized file format"); }
 			
 			//flag specific behaviour:::
 
@@ -64,6 +65,7 @@ static int parse_opt (int key, char *arg, struct argp_state *state) {
 				}
 			}
 			
+			//todo: list duplicate chunks with the same fourcc instead of just one
 			if(options->list_some) {
 				if((int)(strlen(options->chunks) - floor(strlen(options->chunks) / 5)) % 4 != 0) { argp_failure(state, 1, 0, "Invalid searchstring"); }
 				if( ((int)(strlen(options->chunks) - floor(strlen(options->chunks) / 5)) / 4) != (int)(floor(strlen(options->chunks) / 5) + 1)) { argp_failure(state, 1, 0, "Invalid searchstring"); }
@@ -199,7 +201,7 @@ static int read_all_chunks(unsigned long addresses[], FILE *file) {
 
 //naive validation based on the leading RIFF file that should be present
 //returns 1 if the file is valid, 0 if it isn't
-static unsigned char validate_file_format(FILE* file) {
+static bool validate_file_format(FILE* file) {
 
 	unsigned char buffer[4];
 
@@ -212,9 +214,9 @@ static unsigned char validate_file_format(FILE* file) {
 int main(int argc, char *argv[]) {
 
 	Options opt;
-	opt.list_all = 0;
-	opt.list_some = 0;
-	opt.verbose = 0;
+	opt.list_all = false;
+	opt.list_some = false;
+	opt.verbose = false;
 	opt.chunks = "";
 	
 	struct argp argp = { options, parse_opt };
