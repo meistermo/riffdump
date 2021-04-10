@@ -12,6 +12,9 @@ static int count_chunks(FILE*);
 static int read_all_chunks(unsigned long[], FILE*);
 static unsigned char validate_file_format(FILE*);
 
+const char *argp_program_version = "riffdump 0.1";
+const char *argp_program_bug_address = "<mo@momme.wtf>";
+
 static struct argp_option options[] = {
 	{ "list", 'l', "<chunks>", OPTION_ARG_OPTIONAL, "List (all) chunks" },
 	{ "count", 'c', 0, 0, "Count all chunks" },
