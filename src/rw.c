@@ -10,6 +10,7 @@ static int print_chunk_meta(FILE*, long, unsigned char);
 static int print_chunk_count(FILE*, unsigned char);
 static int count_chunks(FILE*);
 static int read_all_chunks(unsigned long[], FILE*);
+static unsigned char validate_file_format(FILE*);
 
 static struct argp_option options[] = {
 	{ "list", 'l', "<chunks>", OPTION_ARG_OPTIONAL, "List (all) chunks" },
@@ -47,9 +48,8 @@ static int parse_opt (int key, char *arg, struct argp_state *state) {
 			/*empty statement*/;
 			FILE *file = fopen(arg, "rb");
 			if(file == NULL) { argp_failure(state, 1, 0, "No such file or directory"); }
-			char filetype_buffer[4];
-			if(fread(filetype_buffer, 1, 4, file) != 4 || strncmp(filetype_buffer, "RIFF", 4) != 0) { argp_failure(state, 1, 0, "Invalid file format"); }
-
+			if(validate_file_format(file) == 0) { argp_failure(state, 1, 0, "Unrecognized file format"); }
+			
 			//flag specific behaviour:::
 
 			if(options->list_all) {
@@ -192,6 +192,18 @@ static int read_all_chunks(unsigned long addresses[], FILE *file) {
 	}
 
 	return 0;
+}
+
+//naive validation based on the leading RIFF file that should be present
+//returns 1 if the file is valid, 0 if it isn't
+static unsigned char validate_file_format(FILE* file) {
+
+	unsigned char buffer[4];
+
+	if(fseek(file, 0, SEEK_SET) != 0) {};
+	if(fread(buffer, 1, 4, file) != 4) {};
+
+	return !strncmp(buffer, "RIFF", 4);
 }
 
 int main(int argc, char *argv[]) {
