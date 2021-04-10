@@ -13,6 +13,7 @@ static int read_all_chunks(unsigned long[], FILE*);
 static struct argp_option options[] = {
 	{ "list", 'l', "<chunks>", OPTION_ARG_OPTIONAL, "List (all) chunks" },
 	{ "count", 'c', 0, 0, "Count all chunks" },
+	{ "verbose", 'v', 0, 0, "Produce verbose output" },
 	{ 0 }
 }; 
 
@@ -20,6 +21,7 @@ typedef struct Options {
 	unsigned char list_some;
 	unsigned char list_all;
 	unsigned char count_only;
+	unsigned char verbose;
 	char *chunks;
 } Options;
 
@@ -34,6 +36,10 @@ static int parse_opt (int key, char *arg, struct argp_state *state) {
 		case 'l':
 			if(arg == NULL) { options->list_all = 1; break; } //without argument to --list
 			else {options->list_some = 1; options->chunks = arg; } //with argument to --list
+			break;
+
+		case 'v':
+			options->verbose = 1;
 			break;
 
 		case ARGP_KEY_ARG:
@@ -175,6 +181,7 @@ int main(int argc, char *argv[]) {
 	Options opt;
 	opt.list_all = 0;
 	opt.list_some = 0;
+	opt.verbose = 0;
 	opt.chunks = "";
 	
 	struct argp argp = { options, parse_opt };
