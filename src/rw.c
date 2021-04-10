@@ -19,7 +19,6 @@ typedef struct Options {
 } Option;
 
 static int parse_opt (int key, char *arg, struct argp_state *state) {
-	static FILE *file;
 	static Option opt = { 0, 0, 0, 0, "" };
 	
 	switch (key) {
@@ -33,7 +32,8 @@ static int parse_opt (int key, char *arg, struct argp_state *state) {
 			break;
 
 		case ARGP_KEY_ARG:
-			file = fopen(arg, "rb");
+			/*empty statement*/; 
+			FILE *file = fopen(arg, "rb");
 			if(file == NULL) { argp_failure(state, 1, 0, "No such file or directory"); }
 			char filetype_buffer[4];
 			if(fread(filetype_buffer, 1, 4, file) != 4 || strncmp(filetype_buffer, "RIFF", 4) != 0) { argp_failure(state, 1, 0, "Invalid file format"); }
