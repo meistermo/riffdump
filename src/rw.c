@@ -139,17 +139,15 @@ static int print_chunk_meta(FILE *file, long address, unsigned char verbose) {
 	} else {
 		printf("%c%c%c%c\n", buffer[0], buffer[1], buffer[2], buffer[3]);
 	}
-	
+
 	return 0;
 }
 
 static int print_chunk_count(FILE *file, unsigned char verbose) {
-	int c = count_chunks(file);
-
 	if(verbose) {
-		printf("%d chunks found\n", c);
+		printf("%d chunks found\n", count_chunks(file));
 	} else {
-		printf("%d\n", c);
+		printf("%d\n", count_chunks(file));
 	}
 	return 0;
 }
