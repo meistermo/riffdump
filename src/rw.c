@@ -5,7 +5,7 @@
 #include <math.h>
 
 static long find_chunk(FILE*, char*);
-static int print_file_meta(FILE*, char*);
+static int print_file_meta(FILE*, char*, unsigned char);
 static int print_chunk_meta(FILE*, long, unsigned char);
 static int print_chunk_count(FILE*, unsigned char);
 static int count_chunks(FILE*);
@@ -83,7 +83,7 @@ static int parse_opt (int key, char *arg, struct argp_state *state) {
 
 			//if no options given
 			if(!options->list_some && !options->list_all && !options->count_only) {
-				if(print_file_meta(file, arg) != 0) { argp_failure(state, 1, 0, "Unable to read file"); }
+				if(print_file_meta(file, arg, options->verbose) != 0) { argp_failure(state, 1, 0, "Unable to read file"); }
 			}
 			
 			fclose(file);
@@ -113,14 +113,18 @@ static long find_chunk(FILE *file, char *identifier) {
 
 //reads file metadata (size [4 bytes] and format type [4 bytes]) and prints it as formatted output
 //returns a negative number if something went wrong while trying to read from the file, else 0 
-static int print_file_meta(FILE *file, char *filename) {
+static int print_file_meta(FILE *file, char *filename, unsigned char verbose) {
 	
 	unsigned char buffer[8];
 	
 	if(fseek(file, 4, SEEK_SET) != 0) { return -1; }
 	if(fread(buffer, 1, 8, file) < 8) { return -1; }
 	
-	printf("%s |» Format: RIFF/%c%c%c%c, Size: %d bytes\n", filename, buffer[4], buffer[5], buffer[6], buffer[7] == 32 ? 0 : buffer[7], 8 + (buffer[0] + (buffer[1] << 8) + (buffer[2] << 16) + (buffer[3] << 24)));
+	if(verbose) {
+		printf("%s |» Format: RIFF/%c%c%c%c, Size: %d bytes\n", filename, buffer[4], buffer[5], buffer[6], buffer[7] == 32 ? 0 : buffer[7], 8 + (buffer[0] + (buffer[1] << 8) + (buffer[2] << 16) + (buffer[3] << 24)));
+	} else {
+		printf("%c%c%c%c\n", buffer[4], buffer[5], buffer[6], buffer[7]);
+	}
 	
 	return 0;
 }
