@@ -6,7 +6,7 @@
 
 static long find_chunk(FILE*, char*);
 static int print_file_meta(FILE*, char*);
-static int print_chunk_meta(FILE*, long);
+static int print_chunk_meta(FILE*, long, unsigned char);
 static int print_chunk_count(FILE*, unsigned char);
 static int count_chunks(FILE*);
 static int read_all_chunks(unsigned long[], FILE*);
@@ -57,7 +57,7 @@ static int parse_opt (int key, char *arg, struct argp_state *state) {
 				unsigned long addresses[size];
 				read_all_chunks(addresses, file);
 				for(int i = 0; i < size; i++) {
-					print_chunk_meta(file, addresses[i]);
+					print_chunk_meta(file, addresses[i], options->verbose);
 				}
 			}
 			
@@ -73,7 +73,7 @@ static int parse_opt (int key, char *arg, struct argp_state *state) {
 					};
 					long chunk_adress = find_chunk(file, fourcc);
 					if(chunk_adress < 0) { argp_failure(state, 1, 0, "Chunk not found"); }
-					if(print_chunk_meta(file, chunk_adress) != 0) { argp_failure(state, 1, 0, "Unable to read file"); }
+					if(print_chunk_meta(file, chunk_adress, options->verbose) != 0) { argp_failure(state, 1, 0, "Unable to read file"); }
 				}
 			}
 
@@ -127,14 +127,18 @@ static int print_file_meta(FILE *file, char *filename) {
 
 //reads chunk metadata (fourcc [4 bytes] and size [4 bytes]) and prints it as formatted output
 //returns a negative number if something went wrong while trying to read from the file, else 0
-static int print_chunk_meta(FILE *file, long address) {
+static int print_chunk_meta(FILE *file, long address, unsigned char verbose) {
 	
 	unsigned char buffer[8];
 	
 	if(fseek(file, address, SEEK_SET) != 0) { return -1; }	
 	if(fread(buffer, 1, 8, file) < 8) {return -1; }
 	
-	printf("'%c%c%c%c' at 0x%X |» Size: %d bytes\n", buffer[0], buffer[1], buffer[2], buffer[3], (int)address, 8 + (buffer[4] + (buffer[5] << 8) + (buffer[6] << 16) + (buffer[7] << 24)));
+	if(verbose) {
+		printf("'%c%c%c%c' at 0x%X |» Size: %d bytes\n", buffer[0], buffer[1], buffer[2], buffer[3], (int)address, 8 + (buffer[4] + (buffer[5] << 8) + (buffer[6] << 16) + (buffer[7] << 24)));
+	} else {
+		printf("%c%c%c%c\n", buffer[0], buffer[1], buffer[2], buffer[3]);
+	}
 	
 	return 0;
 }
