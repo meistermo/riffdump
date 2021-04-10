@@ -32,7 +32,7 @@ static int parse_opt (int key, char *arg, struct argp_state *state) {
 			else {opt.list_some = 1; opt.chunks = arg; } //with argument to --list
 			break;
 
-		case ARGP_KEY_ARG: 
+		case ARGP_KEY_ARG:
 			file = fopen(arg, "rb");
 			if(file == NULL) { argp_failure(state, 1, 0, "No such file or directory"); }
 			char filetype_buffer[4];
@@ -77,10 +77,9 @@ static int parse_opt (int key, char *arg, struct argp_state *state) {
 			fclose(file);
 			break;
 
-		case ARGP_KEY_END:
-			if(state->arg_num < 1) { argp_failure(state, 1, 0, "Too few arguments"); }
+		case ARGP_KEY_NO_ARGS:
+			argp_failure(state, 1, 0, "Too few arguments");
 			break;
-
 	}
 	return 0; 
 } 
