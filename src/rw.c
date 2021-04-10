@@ -10,6 +10,12 @@ static int print_chunk_meta(FILE*, long);
 static int count_chunks(FILE*);
 static int read_all_chunks(unsigned long[], FILE*);
 
+static struct argp_option options[] = {
+	{ "list", 'l', "<chunks>", OPTION_ARG_OPTIONAL, "List (all) chunks" },
+	{ "count", 'c', 0, 0, "Count all chunks" },
+	{ 0 }
+}; 
+
 typedef struct Options {
 	unsigned char list_some;
 	unsigned char list_all;
@@ -170,12 +176,7 @@ int main(int argc, char *argv[]) {
 	opt.list_all = 0;
 	opt.list_some = 0;
 	opt.chunks = "";
-
-	static struct argp_option options[] = {
-		{ "list", 'l', "<chunks>", OPTION_ARG_OPTIONAL, "List (all) chunks" },
-		{ "count", 'c', 0, 0, "Count all chunks" },
-		{ 0 }
-	}; 
+	
 	struct argp argp = { options, parse_opt };
 	return argp_parse(&argp, argc, argv, 0, 0, &opt);
 }
