@@ -16,23 +16,23 @@ typedef struct Options {
 	unsigned char list_all;
 	unsigned char count_only;
 	char *chunks;
-} Option;
+} Options;
 
-static int parse_opt (int key, char *arg, struct argp_state *state) {
-	static Option opt = { 0, 0, 0, 0, "" };
+static int parse_opt (int key, char *arg, struct argp_state *state) {	
+	Options *options = state->input;
 	
 	switch (key) {
 		case 'c':
-			opt.count_only = 1;
+			options->count_only = 1;
 			break;
 
 		case 'l':
-			if(arg == NULL) { opt.list_all = 1; break; } //without argument to --list
-			else {opt.list_some = 1; opt.chunks = arg; } //with argument to --list
+			if(arg == NULL) { options->list_all = 1; break; } //without argument to --list
+			else {options->list_some = 1; options->chunks = arg; } //with argument to --list
 			break;
 
 		case ARGP_KEY_ARG:
-			/*empty statement*/; 
+			/*empty statement*/;
 			FILE *file = fopen(arg, "rb");
 			if(file == NULL) { argp_failure(state, 1, 0, "No such file or directory"); }
 			char filetype_buffer[4];
@@ -40,7 +40,7 @@ static int parse_opt (int key, char *arg, struct argp_state *state) {
 
 			//flag specific behaviour:::
 
-			if(opt.list_all) {
+			if(options->list_all) {
 				int size = count_chunks(file);
 				unsigned long addresses[size];
 				read_all_chunks(addresses, file);
@@ -49,15 +49,15 @@ static int parse_opt (int key, char *arg, struct argp_state *state) {
 				}
 			}
 			
-			if(opt.list_some) {
-				if((int)(strlen(opt.chunks) - floor(strlen(opt.chunks) / 5)) % 4 != 0) { argp_failure(state, 1, 0, "Invalid searchstring"); }
-				if( ((int)(strlen(opt.chunks) - floor(strlen(opt.chunks) / 5)) / 4) != (int)(floor(strlen(opt.chunks) / 5) + 1)) { argp_failure(state, 1, 0, "Invalid searchstring"); }
-				for(int i = 0; i < (int)floor(strlen(opt.chunks) / 5) + 1; i++) {
+			if(options->list_some) {
+				if((int)(strlen(options->chunks) - floor(strlen(options->chunks) / 5)) % 4 != 0) { argp_failure(state, 1, 0, "Invalid searchstring"); }
+				if( ((int)(strlen(options->chunks) - floor(strlen(options->chunks) / 5)) / 4) != (int)(floor(strlen(options->chunks) / 5) + 1)) { argp_failure(state, 1, 0, "Invalid searchstring"); }
+				for(int i = 0; i < (int)floor(strlen(options->chunks) / 5) + 1; i++) {
 					char fourcc[] = {
-						opt.chunks[0 + (i * 4) + i],
-						opt.chunks[1 + (i * 4) + i],
-						opt.chunks[2 + (i * 4) + i],
-						opt.chunks[3 + (i * 4) + i]
+						options->chunks[0 + (i * 4) + i],
+						options->chunks[1 + (i * 4) + i],
+						options->chunks[2 + (i * 4) + i],
+						options->chunks[3 + (i * 4) + i]
 					};
 					long chunk_adress = find_chunk(file, fourcc);
 					if(chunk_adress < 0) { argp_failure(state, 1, 0, "Chunk not found"); }
@@ -65,12 +65,12 @@ static int parse_opt (int key, char *arg, struct argp_state *state) {
 				}
 			}
 
-			if(opt.count_only) {
+			if(options->count_only) {
 				printf("%d\n", count_chunks(file));
 			}
 
 			//if no options given
-			if(!opt.list_some && !opt.a && !opt.list_all && !opt.count_only) {
+			if(!options->list_some && !options->a && !options->list_all && !options->count_only) {
 				if(print_file_meta(file, arg) != 0) { argp_failure(state, 1, 0, "Unable to read file"); }
 			}
 			
@@ -166,11 +166,18 @@ static int read_all_chunks(unsigned long addresses[], FILE *file) {
 }
 
 int main(int argc, char *argv[]) {
-	struct argp_option options[] = {
+
+	Options opt;
+	opt.list_all = 0;
+	opt.list_some = 0;
+	opt.a = 0;
+	opt.chunks = "";
+
+	static struct argp_option options[] = {
 		{ "list", 'l', "<chunks>", OPTION_ARG_OPTIONAL, "List (all) chunks" },
 		{ "count", 'c', 0, 0, "Count all chunks" },
 		{ 0 }
 	}; 
-	struct argp argp = { options, parse_opt }; 
-	return argp_parse(&argp, argc, argv, 0, 0, 0);
+	struct argp argp = { options, parse_opt };
+	return argp_parse(&argp, argc, argv, 0, 0, &opt);
 }
