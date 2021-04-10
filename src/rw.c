@@ -7,6 +7,7 @@
 static long find_chunk(FILE*, char*);
 static int print_file_meta(FILE*, char*);
 static int print_chunk_meta(FILE*, long);
+static int print_chunk_count(FILE*, unsigned char);
 static int count_chunks(FILE*);
 static int read_all_chunks(unsigned long[], FILE*);
 
@@ -77,7 +78,7 @@ static int parse_opt (int key, char *arg, struct argp_state *state) {
 			}
 
 			if(options->count_only) {
-				printf("%d\n", count_chunks(file));
+				print_chunk_count(file, options->verbose);
 			}
 
 			//if no options given
@@ -135,6 +136,12 @@ static int print_chunk_meta(FILE *file, long address) {
 	
 	printf("'%c%c%c%c' at 0x%X |» Size: %d bytes\n", buffer[0], buffer[1], buffer[2], buffer[3], (int)address, 8 + (buffer[4] + (buffer[5] << 8) + (buffer[6] << 16) + (buffer[7] << 24)));
 	
+	return 0;
+}
+
+static int print_chunk_count(FILE *file, unsigned char verbose) {
+	int c = count_chunks(file);
+	printf("%d\n", c);
 	return 0;
 }
 
