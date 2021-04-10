@@ -11,7 +11,6 @@ static int count_chunks(FILE*);
 static int read_all_chunks(unsigned long[], FILE*);
 
 typedef struct Options {
-	unsigned char a;
 	unsigned char list_some;
 	unsigned char list_all;
 	unsigned char count_only;
@@ -70,7 +69,7 @@ static int parse_opt (int key, char *arg, struct argp_state *state) {
 			}
 
 			//if no options given
-			if(!options->list_some && !options->a && !options->list_all && !options->count_only) {
+			if(!options->list_some && !options->list_all && !options->count_only) {
 				if(print_file_meta(file, arg) != 0) { argp_failure(state, 1, 0, "Unable to read file"); }
 			}
 			
@@ -170,7 +169,6 @@ int main(int argc, char *argv[]) {
 	Options opt;
 	opt.list_all = 0;
 	opt.list_some = 0;
-	opt.a = 0;
 	opt.chunks = "";
 
 	static struct argp_option options[] = {
