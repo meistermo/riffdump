@@ -7,7 +7,7 @@ A cli-tool for inspecting content &amp; metadata of files compliant to the RIFF 
 ### Examples
 The following examples illustrate the most common use cases and serve as a short introduction to the software.
 
-`riffdump [file]` - Retreives the extension identifier of a given RIFF-based file. This should describe the actual content type of the leading RIFF chunk that is the root of all subchunks. ~~Fails if the file is not recognized as a valid implementation of RIFF.~~  
+`riffdump [file]` - Retreives the extension identifier of a given RIFF-based file. This should describe the actual content type of the leading RIFF chunk that is the root of all subchunks. Fails if the file is not recognized as a valid implementation of RIFF. 
 
 `riffdump [file] -c` - Counts the number of subchunks that are **direct descendants** of the leading RIFF chunk. Does not count subchunks of subchunks (i.e. if a LIST subchunk is present).
 
