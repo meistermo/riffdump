@@ -141,7 +141,12 @@ static int print_chunk_meta(FILE *file, long address) {
 
 static int print_chunk_count(FILE *file, unsigned char verbose) {
 	int c = count_chunks(file);
-	printf("%d\n", c);
+
+	if(verbose) {
+		printf("%d chunks found\n", c);
+	} else {
+		printf("%d\n", c);
+	}
 	return 0;
 }
 
