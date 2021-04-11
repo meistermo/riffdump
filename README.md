@@ -4,6 +4,18 @@ A cli-tool for inspecting content &amp; metadata of files compliant to the RIFF 
 **Disclaimer:** This software is part of a larger project I've been working on in my free time. I threw it together on short notice and I intend to patch additional functionality as time goes on. My experience with the C programming language is very limited and this software is mostly intended to be a fun and rewarding programming exercise. If you intend to use this software, please do so with caution. It's ~~probably~~ *likely* terribly written and you should keep that in mind.
 ## Installation
 ## Usage
+```
+riffdump [-cv?V] [-l[<chunks>]] [--count] [--list[=<chunks>]] [--verbose] [--help] [--usage] [--version]
+
+  -c, --count                Count all chunks
+  -l, --list[=<chunks>]      List (all) chunks
+  -v, --verbose              Produce verbose output
+  -?, --help                 Give this help list
+      --usage                Give a short usage message
+  -V, --version              Print program version
+```
+
+
 ### Examples
 The following examples illustrate the most common use cases and serve as a short introduction to the software.
 
