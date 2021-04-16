@@ -17,7 +17,7 @@ const char *argp_program_version = "riffdump 0.1";
 const char *argp_program_bug_address = "<mo@momme.wtf>";
 
 static struct argp_option options[] = {
-	{ "list", 'l', "<chunks>", OPTION_ARG_OPTIONAL, "List (all) chunks" },
+	{ "list", 'l', 0, 0, "List all chunks" },
 	{ "sub", 's', "<chunk>", 0, "List all subchunks of <chunk>" },
 	{ "count", 'c', 0, 0, "Count all chunks" },
 	{ "verbose", 'v', 0, 0, "Produce verbose output" },
@@ -25,12 +25,11 @@ static struct argp_option options[] = {
 }; 
 
 typedef struct Options {
-	bool list_some;
 	bool list_all;
 	bool list_sub;
+	char *parent_chunk_for_subs;
 	bool count_only;
 	bool verbose;
-	char *chunks;
 } Options;
 
 static int parse_opt (int key, char *arg, struct argp_state *state) { 
@@ -43,11 +42,11 @@ static int parse_opt (int key, char *arg, struct argp_state *state) {
 
 		case 's':
 			options->list_sub = true;
+			options->parent_chunk_for_subs = arg;
 			break;
 
 		case 'l':
-			if(arg == NULL) { options->list_all = true; break; } //without argument to --list
-			else {options->list_some = true; options->chunks = arg; } //with argument to --list
+			options->list_all = true;
 			break;
 
 		case 'v':
@@ -71,33 +70,16 @@ static int parse_opt (int key, char *arg, struct argp_state *state) {
 				}
 			}
 			
-			//todo: list duplicate chunks with the same fourcc instead of just one
-			if(options->list_some) {
-				if((int)(strlen(options->chunks) - floor(strlen(options->chunks) / 5)) % 4 != 0) { argp_failure(state, 1, 0, "Invalid searchstring"); }
-				if( ((int)(strlen(options->chunks) - floor(strlen(options->chunks) / 5)) / 4) != (int)(floor(strlen(options->chunks) / 5) + 1)) { argp_failure(state, 1, 0, "Invalid searchstring"); }
-				for(int i = 0; i < (int)floor(strlen(options->chunks) / 5) + 1; i++) {
-					char fourcc[] = {
-						options->chunks[0 + (i * 4) + i],
-						options->chunks[1 + (i * 4) + i],
-						options->chunks[2 + (i * 4) + i],
-						options->chunks[3 + (i * 4) + i]
-					};
-					long chunk_adress = find_chunk(file, fourcc);
-					if(chunk_adress < 0) { argp_failure(state, 1, 0, "Chunk not found"); }
-					if(print_chunk_meta(file, chunk_adress, options->verbose) != 0) { argp_failure(state, 1, 0, "Unable to read file"); }
-				}
-			}
-
 			if(options->count_only) {
 				print_chunk_count(file, options->verbose);
 			}
 
 			if(options->list_sub) {
-				printf("%d\n", count_chunks(file, find_chunk(file, "LIST")));
+				printf("%d\n", count_chunks(file, find_chunk(file, options->parent_chunk_for_subs)));
 			}
 
 			//if no options given
-			if(!options->list_some && !options->list_all && !options->count_only) {
+			if(!options->list_sub && !options->list_all && !options->count_only) {
 				if(print_file_meta(file, arg, options->verbose) != 0) { argp_failure(state, 1, 0, "Unable to read file"); }
 			}
 			
@@ -232,10 +214,10 @@ int main(int argc, char *argv[]) {
 
 	Options opt;
 	opt.list_all = false;
-	opt.list_some = false;
 	opt.list_sub = false;
+	opt.count_only = false;
 	opt.verbose = false;
-	opt.chunks = "";
+	opt.parent_chunk_for_subs = "";
 	
 	struct argp argp = { options, parse_opt };
 	return argp_parse(&argp, argc, argv, 0, 0, &opt);
