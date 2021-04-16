@@ -9,7 +9,7 @@ static long find_chunk(FILE*, char*);
 static int print_file_meta(FILE*, char*, unsigned char);
 static int print_chunk_meta(FILE*, long, unsigned char);
 static int print_chunk_count(FILE*, unsigned char);
-static int count_chunks(FILE*);
+static int count_chunks(FILE*, long);
 static int read_all_chunks(unsigned long[], FILE*);
 static bool validate_file_format(FILE*);
 
@@ -63,7 +63,7 @@ static int parse_opt (int key, char *arg, struct argp_state *state) {
 			//flag specific behaviour:::
 
 			if(options->list_all) {
-				int size = count_chunks(file);
+				int size = count_chunks(file, 0);
 				unsigned long addresses[size];
 				read_all_chunks(addresses, file);
 				for(int i = 0; i < size; i++) {
@@ -90,6 +90,10 @@ static int parse_opt (int key, char *arg, struct argp_state *state) {
 
 			if(options->count_only) {
 				print_chunk_count(file, options->verbose);
+			}
+
+			if(options->list_sub) {
+				printf("%d\n", count_chunks(file, find_chunk(file, "LIST")));
 			}
 
 			//if no options given
@@ -160,9 +164,9 @@ static int print_chunk_meta(FILE *file, long address, unsigned char verbose) {
 
 static int print_chunk_count(FILE *file, unsigned char verbose) {
 	if(verbose) {
-		printf("%d chunks found\n", count_chunks(file));
+		printf("%d chunks found\n", count_chunks(file, 0));
 	} else {
-		printf("%d\n", count_chunks(file));
+		printf("%d\n", count_chunks(file, 0));
 	}
 	return 0;
 }
@@ -170,14 +174,21 @@ static int print_chunk_count(FILE *file, unsigned char verbose) {
 //todo: validate file integrity based on file size vs chunk sizes
 //counts all subchunks of the root RIFF chunk by crawling the size metadata (always bytes 5-8 of a new chunk)
 //returns the number of chunks found or a negative number if something went wrong while trying to read from the file
-static int count_chunks(FILE *file) {
+static int count_chunks(FILE *file, long offset) {
 	
 	int n = 0;
-	unsigned char chunk_size[4];
+	unsigned char buffer[4];
+	
+	if(fseek(file, offset + 4, SEEK_SET) != 0) { return -1; }
+	if(fread(buffer, 1, 4, file) != 4) { return -1; }
+	unsigned long p_size = (buffer[0] + (buffer[1] << 8) + (buffer[2] << 16) + (buffer[3] << 24));
 
-	if(fseek(file, 16, SEEK_SET) != 0) { return -1; }
-	while(fread(chunk_size, 1, 4, file) == 4) {
-		if(fseek(file, 4 + (chunk_size[0] + (chunk_size[1] << 8) + (chunk_size[2] << 16) + (chunk_size[3] << 24)), SEEK_CUR) != 0) { return -1; }
+	if(fseek(file, 8, SEEK_CUR) != 0) { return -1; }
+	unsigned long c = 0;
+	while(c < p_size - 4) {
+		if(fread(buffer, 1, 4, file) != 4) { return -1; };
+		if(fseek(file, 4 + (buffer[0] + (buffer[1] << 8) + (buffer[2] << 16) + (buffer[3] << 24)), SEEK_CUR) != 0) { return -1; }
+		c += 8 + (buffer[0] + (buffer[1] << 8) + (buffer[2] << 16) + (buffer[3] << 24));
 		n++;
 	}
 	
