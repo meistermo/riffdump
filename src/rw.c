@@ -8,7 +8,7 @@
 static long find_chunk(FILE*, char*);
 static int print_file_meta(FILE*, char*, unsigned char);
 static int print_chunk_meta(FILE*, long, unsigned char);
-static int print_chunk_count(FILE*, unsigned char);
+static int print_chunk_count(FILE*, long, unsigned char);
 static int count_chunks(FILE*, long);
 static int read_all_chunks(unsigned long[], FILE*);
 static bool validate_file_format(FILE*);
@@ -71,11 +71,11 @@ static int parse_opt (int key, char *arg, struct argp_state *state) {
 			}
 			
 			if(options->count_only) {
-				print_chunk_count(file, options->verbose);
+				print_chunk_count(file, 0, options->verbose);
 			}
 
 			if(options->list_sub) {
-				printf("%d\n", count_chunks(file, find_chunk(file, options->parent_chunk_for_subs)));
+				print_chunk_count(file, find_chunk(file, options->parent_chunk_for_subs), options->verbose);
 			}
 
 			//if no options given
@@ -144,11 +144,12 @@ static int print_chunk_meta(FILE *file, long address, unsigned char verbose) {
 	return 0;
 }
 
-static int print_chunk_count(FILE *file, unsigned char verbose) {
+static int print_chunk_count(FILE *file, long offset, unsigned char verbose) {
+	int n = count_chunks(file, offset);
 	if(verbose) {
-		printf("%d chunks found\n", count_chunks(file, 0));
+		printf("%d %schunk%s found\n", n, offset > 0 ? "sub" : "", n > 1 ? "s" : "");
 	} else {
-		printf("%d\n", count_chunks(file, 0));
+		printf("%d\n", count_chunks(file, offset));
 	}
 	return 0;
 }
