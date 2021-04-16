@@ -70,11 +70,15 @@ static int parse_opt (int key, char *arg, struct argp_state *state) {
 				}
 			}
 			
-			if(options->count_only) {
+			if(options->count_only && !options->list_sub) {
 				print_chunk_count(file, 0, options->verbose);
 			}
 
-			if(options->list_sub) {
+			if(options->list_sub && !options->count_only) {
+				printf("this will list all subchunks of chunk\n");
+			}
+
+			if(options->list_sub && options->count_only) {
 				print_chunk_count(file, find_chunk(file, options->parent_chunk_for_subs), options->verbose);
 			}
 
