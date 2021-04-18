@@ -10,7 +10,7 @@ static int print_file_meta(FILE*, char*, unsigned char);
 static int print_chunk_meta(FILE*, long, unsigned char);
 static int print_chunk_count(FILE*, long, unsigned char);
 static int count_chunks(FILE*, long);
-static int read_all_chunks(unsigned long[], FILE*);
+static int read_subchunks(unsigned long[], FILE*, long);
 static bool validate_file_format(FILE*);
 
 const char *argp_program_version = "riffdump 0.1";
@@ -61,11 +61,16 @@ static int parse_opt (int key, char *arg, struct argp_state *state) {
 
 			if(options->list) {
 				if(strlen(options->sub)) { //list subchunks
-					printf("this will list all subchunks\n");
+					int size = count_chunks(file, find_chunk(file, options->sub));
+					unsigned long addresses[size];
+					read_subchunks(addresses, file, find_chunk(file, options->sub));
+					for(int i = 0; i < size; i++) {
+						print_chunk_meta(file, addresses[i], options->verbose);
+					}					
 				} else { //list chunks
 					int size = count_chunks(file, 0);
 					unsigned long addresses[size];
-					read_all_chunks(addresses, file);
+					read_subchunks(addresses, file, 0);
 					for(int i = 0; i < size; i++) {
 						print_chunk_meta(file, addresses[i], options->verbose);
 					}
@@ -182,22 +187,28 @@ static int count_chunks(FILE *file, long offset) {
 
 //writes the byte adresses of all chunks in this file to addresses[]
 //returns a negative number if something went wrong while trying to read from the file, else 0
-static int read_all_chunks(unsigned long addresses[], FILE *file) {
+static int read_subchunks(unsigned long addresses[], FILE *file, long offset) {
 	
 	int n = 0;
-	unsigned char chunk_size[4];
-	long adr = 12;
+	unsigned char buffer[4];
+	long adr = 12 + offset;
 
-	if(fseek(file, 16, SEEK_SET) != 0) {return -1; }
+	//if(fseek(file, 16 + offset, SEEK_SET) != 0) {return -1; }
+	if(fseek(file, offset + 4, SEEK_SET) != 0) {return -1; }
+	if(fread(buffer, 1, 4, file) != 4) { return -1; }
+	unsigned long p_size = (buffer[0] + (buffer[1] << 8) + (buffer[2] << 16) + (buffer[3] << 24));
 
-	while(fread(chunk_size, 1, 4, file) == 4) {
+	if(fseek(file, 8, SEEK_CUR) != 0) { return -1; }
+	unsigned long c = 0;
+	while(c < p_size - 4) {
+		if(fread(buffer, 1, 4, file) != 4) { return -1; }
 		addresses[n] = adr;
 		n++;
 
-		if(fseek(file, 4 + (chunk_size[0] + (chunk_size[1] << 8) + (chunk_size[2] << 16) + (chunk_size[3] << 24)), SEEK_CUR) != 0) { return -1; }
-		adr += 8 + (chunk_size[0] + (chunk_size[1] << 8) + (chunk_size[2] << 16) + (chunk_size[3] << 24));
+		if(fseek(file, 4 + (buffer[0] + (buffer[1] << 8) + (buffer[2] << 16) + (buffer[3] << 24)), SEEK_CUR) != 0) { return -1; }
+		adr += 8 + (buffer[0] + (buffer[1] << 8) + (buffer[2] << 16) + (buffer[3] << 24));
+		c += 8 + (buffer[0] + (buffer[1] << 8) + (buffer[2] << 16) + (buffer[3] << 24));
 	}
-
 	return 0;
 }
 
