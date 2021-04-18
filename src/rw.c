@@ -25,10 +25,9 @@ static struct argp_option options[] = {
 }; 
 
 typedef struct Options {
-	bool list_all;
-	bool list_sub;
-	char *parent_chunk_for_subs;
-	bool count_only;
+	bool list;
+	char *sub;
+	bool count;
 	bool verbose;
 } Options;
 
@@ -37,16 +36,15 @@ static int parse_opt (int key, char *arg, struct argp_state *state) {
 	
 	switch (key) {
 		case 'c':
-			options->count_only = true;
+			options->count = true;
 			break;
 
 		case 's':
-			options->list_sub = true;
-			options->parent_chunk_for_subs = arg;
+			options->sub = arg;
 			break;
 
 		case 'l':
-			options->list_all = true;
+			options->list = true;
 			break;
 
 		case 'v':
@@ -61,29 +59,29 @@ static int parse_opt (int key, char *arg, struct argp_state *state) {
 			
 			//flag specific behaviour:::
 
-			if(options->list_all) {
-				int size = count_chunks(file, 0);
-				unsigned long addresses[size];
-				read_all_chunks(addresses, file);
-				for(int i = 0; i < size; i++) {
-					print_chunk_meta(file, addresses[i], options->verbose);
+			if(options->list) {
+				if(strlen(options->sub)) { //list subchunks
+					printf("this will list all subchunks\n");
+				} else { //list chunks
+					int size = count_chunks(file, 0);
+					unsigned long addresses[size];
+					read_all_chunks(addresses, file);
+					for(int i = 0; i < size; i++) {
+						print_chunk_meta(file, addresses[i], options->verbose);
+					}
 				}
 			}
 			
-			if(options->count_only && !options->list_sub) {
-				print_chunk_count(file, 0, options->verbose);
+			if(options->count) {
+				if(strlen(options->sub)) { //count subchunks
+					print_chunk_count(file, find_chunk(file, options->sub), options->verbose);
+				} else { //count chunks
+					print_chunk_count(file, 0, options->verbose);
+				}
 			}
-
-			if(options->list_sub && !options->count_only) {
-				printf("this will list all subchunks of chunk\n");
-			}
-
-			if(options->list_sub && options->count_only) {
-				print_chunk_count(file, find_chunk(file, options->parent_chunk_for_subs), options->verbose);
-			}
-
+		
 			//if no options given
-			if(!options->list_sub && !options->list_all && !options->count_only) {
+			if(!strlen(options->sub) && !options->list && !options->count) {
 				if(print_file_meta(file, arg, options->verbose) != 0) { argp_failure(state, 1, 0, "Unable to read file"); }
 			}
 			
@@ -218,11 +216,10 @@ static bool validate_file_format(FILE* file) {
 int main(int argc, char *argv[]) {
 
 	Options opt;
-	opt.list_all = false;
-	opt.list_sub = false;
-	opt.count_only = false;
+	opt.list = false;
+	opt.count = false;
 	opt.verbose = false;
-	opt.parent_chunk_for_subs = "";
+	opt.sub = "";
 	
 	struct argp argp = { options, parse_opt };
 	return argp_parse(&argp, argc, argv, 0, 0, &opt);
