@@ -9,7 +9,7 @@ static long find_chunk(FILE*, char*);
 static int print_file_meta(FILE*, char*, unsigned char);
 static int print_chunk_meta(FILE*, long, unsigned char);
 static int print_chunk_count(FILE*, long, unsigned char);
-static int count_chunks(FILE*, long);
+static int count_subchunks(FILE*, long);
 static int read_subchunks(unsigned long[], FILE*, long);
 static bool validate_file_format(FILE*);
 
@@ -61,14 +61,14 @@ static int parse_opt (int key, char *arg, struct argp_state *state) {
 
 			if(options->list) {
 				if(strlen(options->sub)) { //list subchunks
-					int size = count_chunks(file, find_chunk(file, options->sub));
+					int size = count_subchunks(file, find_chunk(file, options->sub));
 					unsigned long addresses[size];
 					read_subchunks(addresses, file, find_chunk(file, options->sub));
 					for(int i = 0; i < size; i++) {
 						print_chunk_meta(file, addresses[i], options->verbose);
 					}					
 				} else { //list chunks
-					int size = count_chunks(file, 0);
+					int size = count_subchunks(file, 0);
 					unsigned long addresses[size];
 					read_subchunks(addresses, file, 0);
 					for(int i = 0; i < size; i++) {
@@ -152,19 +152,18 @@ static int print_chunk_meta(FILE *file, long address, unsigned char verbose) {
 }
 
 static int print_chunk_count(FILE *file, long offset, unsigned char verbose) {
-	int n = count_chunks(file, offset);
+	int n = count_subchunks(file, offset);
 	if(verbose) {
 		printf("%d %schunk%s found\n", n, offset > 0 ? "sub" : "", n > 1 ? "s" : "");
 	} else {
-		printf("%d\n", count_chunks(file, offset));
+		printf("%d\n", n);
 	}
 	return 0;
 }
 
-//todo: validate file integrity based on file size vs chunk sizes
 //counts all subchunks of the root RIFF chunk by crawling the size metadata (always bytes 5-8 of a new chunk)
 //returns the number of chunks found or a negative number if something went wrong while trying to read from the file
-static int count_chunks(FILE *file, long offset) {
+static int count_subchunks(FILE *file, long offset) {
 	
 	int n = 0;
 	unsigned char buffer[4];
@@ -185,7 +184,7 @@ static int count_chunks(FILE *file, long offset) {
 	return n;
 }
 
-//writes the byte adresses of all chunks in this file to addresses[]
+//writes the byte adresses of all subchunks of the chunk at <offset> to addresses[]
 //returns a negative number if something went wrong while trying to read from the file, else 0
 static int read_subchunks(unsigned long addresses[], FILE *file, long offset) {
 	
