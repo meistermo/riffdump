@@ -17,9 +17,9 @@ const char *argp_program_version = "riffdump 0.1";
 const char *argp_program_bug_address = "<mo@momme.wtf>";
 
 static struct argp_option options[] = {
-	{ "list", 'l', 0, 0, "List all chunks" },
-	{ "sub", 's', "<chunk>", 0, "List all subchunks of <chunk>" },
-	{ "count", 'c', 0, 0, "Count all chunks" },
+	{ "list", 'l', 0, 0, "List subchunks" },
+	{ "sub", 's', "<chunk>", 0, "The subchunk to operate on. Default: RIFF" },
+	{ "count", 'c', 0, 0, "Count subchunks" },
 	{ "verbose", 'v', 0, 0, "Produce verbose output" },
 	{ 0 }
 }; 
