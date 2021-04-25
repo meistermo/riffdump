@@ -5,14 +5,16 @@ A cli-tool for inspecting content &amp; metadata of files compliant to the RIFF 
 ## Installation
 ## Usage
 ```
-riffdump [-cv?V] [-l[<chunks>]] [--count] [--list[=<chunks>]] [--verbose] [--help] [--usage] [--version]
+Usage: riffdump [OPTION...]
 
-  -c, --count                Count all chunks
-  -l, --list[=<chunks>]      List (all) chunks
+  -c, --count                Count subchunks
+  -l, --list                 List subchunks
+  -s, --sub=<chunk>          Specify the chunk to operate on (Default: RIFF)
   -v, --verbose              Produce verbose output
   -?, --help                 Give this help list
       --usage                Give a short usage message
   -V, --version              Print program version
+
 ```
 
 
@@ -23,7 +25,13 @@ The following examples illustrate the most common use cases and serve as a short
 
 `riffdump [file] -c` - Counts the number of subchunks that are **direct descendants** of the leading RIFF chunk. Does not count subchunks of subchunks (i.e. if a LIST subchunk is present).
 
+`riffdump [file] -c -s "LIST"` - Counts the number of subchunks that are **direct descendants** of the specified LIST subchunk. Does not count subchunks of subchunks (i.e. if another LIST subchunk is part of the specified LIST subchunk).
+
 `riffdump [file] -l` - Lists all subchunks that are **direct descendants** of the leading RIFF chunk. Does not list subchunks of subchunks (i.e. if a LIST subchunk is present). Subchunks are identified by their respective FourCC identifier.
+
+
+`riffdump [file] -l -s "LIST"` - Lists all subchunks that are **direct descendants** of the specified LIST subchunk. Does not list subchunks of subchunks (i.e. if another LIST subchunk is part of the specified LIST subchunk). Subchunks are identified by their respective FourCC identifier.
+
 
 `riffdump [file1] [file2] [...]` - Retreives the extension identifier of **all** given RIFF-based files. Processing multiple files at once is supported but not always recommended as this potentially removes explicit interpretations for the output. Readability is key, never sacrifice it.
 
