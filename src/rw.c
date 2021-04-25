@@ -92,11 +92,7 @@ static int parse_opt (int key, char *arg, struct argp_state *state) {
 			}
 
 			if(strlen(options->data)) {
-				if(strlen(options->sub)) {
-					print_chunk_data(file, find_chunk(file, options->sub), options->verbose);
-				} else {
-					print_chunk_data(file, find_chunk(file, options->data), options->verbose);
-				}
+				print_chunk_data(file, find_chunk(file, options->data), options->verbose);
 			}
 
 			//if no options given
@@ -178,7 +174,11 @@ static int print_chunk_data(FILE *file, long address, unsigned char verbose) {
 	
 	if(verbose) {
 		for(int i = 0; i < data_size; i++) {
-			printf("%c ", buffer[i]);
+			if(buffer[i] >= 32 && buffer[i] <= 126) {
+				printf("%c", buffer[i]);
+			} else {
+				printf(".");
+			}
 		}
 	} else {
 		for(int i = 0; i < data_size; i++) {
