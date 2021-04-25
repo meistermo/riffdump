@@ -8,6 +8,7 @@
 static long find_chunk(FILE*, char*);
 static int print_file_meta(FILE*, char*, unsigned char);
 static int print_chunk_meta(FILE*, long, unsigned char);
+static int print_chunk_data(FILE*, long, unsigned char);
 static int print_chunk_count(FILE*, long, unsigned char);
 static int count_subchunks(FILE*, long);
 static int read_subchunks(unsigned long[], FILE*, long);
@@ -29,7 +30,7 @@ typedef struct Options {
 	bool list;
 	char *sub;
 	bool count;
-	bool data;
+	char *data;
 	bool verbose;
 } Options;
 
@@ -38,7 +39,7 @@ static int parse_opt (int key, char *arg, struct argp_state *state) {
 	
 	switch (key) {
 		case 'd':
-			options->data = true;
+			options->data = arg;
 			break;
 		case 'c':
 			options->count = true;
@@ -89,9 +90,13 @@ static int parse_opt (int key, char *arg, struct argp_state *state) {
 					print_chunk_count(file, 0, options->verbose);
 				}
 			}
-		
+
+			if(strlen(options->data)) {
+				print_chunk_data(file, find_chunk(file, options->data), options->verbose);
+			}
+
 			//if no options given
-			if(!strlen(options->sub) && !options->list && !options->count) {
+			if(!strlen(options->data) && !strlen(options->sub) && !options->list && !options->count) {
 				if(print_file_meta(file, arg, options->verbose) != 0) { argp_failure(state, 1, 0, "Unable to read file"); }
 			}
 			
@@ -153,6 +158,31 @@ static int print_chunk_meta(FILE *file, long address, unsigned char verbose) {
 		printf("%c%c%c%c\n", buffer[0], buffer[1], buffer[2], buffer[3]);
 	}
 
+	return 0;
+}
+
+static int print_chunk_data(FILE *file, long address, unsigned char verbose) {
+	unsigned char size[8];
+	
+	if(fseek(file, address + 4, SEEK_SET) != 0) { return -1; }	
+	if(fread(size, 1, 4, file) < 4) {return -1; }
+	
+	unsigned long data_size = (size[0] + (size[1] << 8) + (size[2] << 16) + (size[3] << 24));
+	unsigned char buffer[data_size];
+
+	if(fread(buffer, 1, data_size, file) < data_size) { return -1; }
+	
+	if(verbose) {
+		for(int i = 0; i < data_size; i++) {
+			printf("%c ", buffer[i]);
+		}
+	} else {
+		for(int i = 0; i < data_size; i++) {
+			printf("%X ", (int)buffer[i]);
+		}
+	}
+		
+	printf("\n");
 	return 0;
 }
 
@@ -234,7 +264,7 @@ int main(int argc, char *argv[]) {
 	opt.list = false;
 	opt.count = false;
 	opt.verbose = false;
-	opt.data = false;
+	opt.data = "";
 	opt.sub = "";
 	
 	struct argp argp = { options, parse_opt };
