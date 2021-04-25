@@ -19,6 +19,7 @@ const char *argp_program_bug_address = "<mo@momme.wtf>";
 static struct argp_option options[] = {
 	{ "list", 'l', 0, 0, "List subchunks" },
 	{ "sub", 's', "<chunk>", 0, "Specify the chunk to operate on (Default: RIFF)" },
+	{ "data", 'd', "<chunk>", 0, "Dump chunk data"},
 	{ "count", 'c', 0, 0, "Count subchunks" },
 	{ "verbose", 'v', 0, 0, "Produce verbose output" },
 	{ 0 }
@@ -28,6 +29,7 @@ typedef struct Options {
 	bool list;
 	char *sub;
 	bool count;
+	bool data;
 	bool verbose;
 } Options;
 
@@ -35,6 +37,9 @@ static int parse_opt (int key, char *arg, struct argp_state *state) {
 	Options *options = state->input;
 	
 	switch (key) {
+		case 'd':
+			options->data = true;
+			break;
 		case 'c':
 			options->count = true;
 			break;
@@ -229,6 +234,7 @@ int main(int argc, char *argv[]) {
 	opt.list = false;
 	opt.count = false;
 	opt.verbose = false;
+	opt.data = false;
 	opt.sub = "";
 	
 	struct argp argp = { options, parse_opt };
