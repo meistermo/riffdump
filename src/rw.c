@@ -92,7 +92,11 @@ static int parse_opt (int key, char *arg, struct argp_state *state) {
 			}
 
 			if(strlen(options->data)) {
-				print_chunk_data(file, find_chunk(file, options->data), options->verbose);
+				if(strlen(options->sub)) {
+					print_chunk_data(file, find_chunk(file, options->sub), options->verbose);
+				} else {
+					print_chunk_data(file, find_chunk(file, options->data), options->verbose);
+				}
 			}
 
 			//if no options given
